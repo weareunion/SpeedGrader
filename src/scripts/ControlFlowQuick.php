@@ -64,9 +64,9 @@ $workbench_dir = make_workbench($parent_dir);
 
 label_submission_list:
 if ($details_active){
-    echo "\nAssigment: \033[35m ".$details['assigment_name']." - ".$details['assigment_id']." (".$details['section'].")\033[0m\n";
+    echo "\nAssignment: \033[35m ".$details['assigment_name']." - ".$details['assigment_id']." (".$details['section'].")\033[0m\n";
 }else{
-    echo "\nAssigment: \033[35m Unnamed Assigment \033[0m\n";
+    echo "\nAssignment: \033[35m Unnamed Assignment \033[0m\n";
 }
 echo "Select submission to grade:\n";
 $count = 0;
@@ -81,7 +81,7 @@ foreach($files_structured as $key => $file){
 
 if (!$details_active) echo "\nexport. \e[90m[Export Grades] - \e[5m Must run assigment details first \e[25m\e[0m";
 else echo "\nexport. \033[35m[Export Grades] \033[0m";
-echo "\ndetails. \033[35m[Change Assigment Details] \033[0m";
+echo "\ndetails. \033[35m[Change Assignment Details] \033[0m";
 echo "\n0 or quit. \033[31m[Save and Quit] \033[0m";
 echo "\nSelect a submission number or command above:";
 
@@ -95,9 +95,9 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
 }elseif($option === 'details'){
     echo "\nSection Number: ";
     $details['section'] = CLIInputManagerObject::getInputLine();
-    echo "\nAssigment Name: ";
+    echo "\nAssignment Name: ";
     $details['assigment_name'] = CLIInputManagerObject::getInputLine();
-    echo "\nAssigment ID: ";
+    echo "\nAssignment ID: ";
     $details['assigment_id'] = CLIInputManagerObject::getInputLine();
     echo "\n\033[32mDetails updated. \033[0m\n";
     $details_active = true;
