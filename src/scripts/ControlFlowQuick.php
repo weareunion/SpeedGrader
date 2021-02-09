@@ -14,13 +14,13 @@ $details = [
     "section" => "",
 ];
 echo "Quick grade mode started. Will run without classifications.\n";
-if (file_exists('progress.json')){
+if (file_exists("$parent_dir/progress.json")){
     echo "Previous GradeBook found. Restoring...\n";
-    $files_structured = json_decode(file_get_contents('progress.json'), true);
+    $files_structured = json_decode(file_get_contents("$parent_dir/progress.json"), true);
 }
-if (file_exists('assigment.json')){
+if (file_exists("$parent_dir/assigment.json")){
     echo "Previous assigment details found. Restoring...\n";
-    $details = json_decode(file_get_contents('assigment.json'), true);
+    $details = json_decode(file_get_contents("$parent_dir/assigment.json"), true);
     $details_active = true;
 }
 $dir_contents = array_diff(scandir(getcwd()), array('.', '..'));
@@ -85,7 +85,7 @@ echo "\ndetails. \033[35m[Change Assigment Details] \033[0m";
 echo "\n0 or quit. \033[31m[Save and Quit] \033[0m";
 echo "\nSelect a submission number or command above:";
 
-file_put_contents('progress.json', json_encode($files_structured));
+file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
 
 $option = CLIInputManagerObject::getInputLine();
 if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_numeric($option) || $option < 0 || $option > sizeof($files_structured))){
@@ -101,7 +101,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     $details['assigment_id'] = CLIInputManagerObject::getInputLine();
     echo "\n\033[32mDetails updated. \033[0m\n";
     $details_active = true;
-    file_put_contents('assigment.json', json_encode($details));
+    file_put_contents("$parent_dir/assigment.json", json_encode($details));
     goto label_submission_list;
 
 }elseif($option === 'export'){
@@ -136,13 +136,13 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     goto label_submission_list;
 }elseif($option === 'quit' || $option == 0){
     echo "Saving...\n";
-    file_put_contents('progress.json', json_encode($files_structured));
+    file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     echo "Good Bye!\n";
 }else{
-    file_put_contents('progress.json', json_encode($files_structured));
+    file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     $selected = get_from_list($files_structured, $option);
     label_submission_option:
-    file_put_contents('progress.json', json_encode($files_structured));
+    file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     echo "Selected $option: " . show_file($selected);
     echo "\n1. \033[35m[Open Submission in Grader] \033[0m";
     echo "\n2. \033[35m[Change Submission Grade] \033[0m";
@@ -150,7 +150,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     echo "\n4. \033[31m[Delete submission from save] \033[0m";
 
     echo "\n\n0. \033[33m[<- Back] \033[0m";
-    echo "\nSelect an option 0-3: ";
+    echo "\nSelect an option 0-4: ";
     $option_list = CLIInputManagerObject::getInputLine();
 
     if (!is_numeric($option_list) || $option_list < 0 || $option_list > 4 ){
@@ -307,7 +307,7 @@ function readme(){
 
 function set_up($file_name, $workbench_dir, $parent_dir, $flatten, $auto_make){
     chdir($workbench_dir);
-    shell_exec("unzip ".($flatten ? '-j' : '')." ../$file_name");
+    shell_exec("unzip ".($flatten ? '-jo' : '')." ../$file_name");
     if ($auto_make){
         echo "Making file (will sleep SpeedGrader for 3 seconds to give make time to run)...\n";
         shell_exec('make');

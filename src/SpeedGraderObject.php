@@ -9,19 +9,19 @@ class SpeedGraderObject
         ],
         "institution" => "Clemson University",
         "directories" => [
-            'supporting' => 'speedgrader/supporting',
+            'supporting' => '~/SpeedGrader/supporting',
         ]
     ];
     static function loadConfig(){
-        self::$config = json_decode(file_get_contents('speedgrader/config.json'), true, 512, JSON_THROW_ON_ERROR);
+        self::$config = json_decode(file_get_contents('~/SpeedGrader/config.json'), true, 512, JSON_THROW_ON_ERROR);
     }
     static function saveConfig(){
-        if(!(is_dir('speedgrader'))){
-            if (!mkdir('speedgrader') && !is_dir('speedgrader')) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created. This program will fail.', 'speedgrader'));
+        if(!(is_dir('~/SpeedGrader/speedgrader'))){
+            if (!mkdir('~/SpeedGrader/speedgrader') && !is_dir('~/SpeedGrader/speedgrader')) {
+                throw new \RuntimeException(sprintf('Directory "%s" was not created. This program will fail.', '~/SpeedGrader/speedgrader'));
             }
         }
-        file_put_contents('speedgrader/config.json', json_encode(self::$config, JSON_THROW_ON_ERROR));
+        file_put_contents('~/SpeedGrader/config.json', json_encode(self::$config, JSON_THROW_ON_ERROR));
     }
     static function
     setSupportingDirectory($dir=""){
