@@ -94,7 +94,7 @@ if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option
     echo "Press enter to continue...\n";
     CLIInputManagerObject::getInputLine();
     goto label_submission_list;
-}elseif($option === 'quit' || $option === 0){
+}elseif($option === 'quit' || $option == 0){
     echo "Saving...\n";
     file_put_contents('progress.json', json_encode($files_structured));
     echo "Good Bye!\n";
@@ -107,12 +107,13 @@ if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option
     echo "\n1. \033[35m[Open Submission in Grader] \033[0m";
     echo "\n2. \033[35m[Change Submission Grade] \033[0m";
     echo "\n3. \033[35m[Move to Workbench] \033[0m";
+    echo "\n4. \033[31m[Delete submission from save] \033[0m";
 
     echo "\n\n0. \033[33m[<- Back] \033[0m";
     echo "\nSelect an option 0-3: ";
     $option_list = CLIInputManagerObject::getInputLine();
 
-    if (!is_numeric($option_list) || $option_list < 0 || $option_list > 3 ){
+    if (!is_numeric($option_list) || $option_list < 0 || $option_list > 4 ){
         show_error("INVALID INPUT Please select a number in range.");
         goto label_submission_option;
     }
@@ -155,7 +156,10 @@ if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option
                         }else{
                             echo "\nGrade could not be changed.\n";
                         }
-                        if ($quit_when_done) $hold = false;
+                        if ($quit_when_done){
+                            $hold = false;
+                            goto label_submission_list;
+                        }
                         break;
                     default:
                         $output = [];
@@ -191,6 +195,16 @@ if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option
             $workbench_dir = make_workbench($parent_dir);
             set_up($selected['file_name'], $workbench_dir, $parent_dir, $flatten, $auto_make);
             goto label_submission_option;
+            break;
+        case 4:
+            if(CLIInputManagerObject::promptYN("Are you sure you want to delete this submission? The actual file will not be deleted, 
+            however the grade will be lost. (y/n)")){
+                unset($files_structured[$selected['file_name']]);
+                goto label_submission_list;
+            }else{
+                goto label_submission_option;
+            }
+
     }
 }
 
