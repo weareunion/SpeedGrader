@@ -152,7 +152,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     echo "\n5. \033[31m[Delete submission from save] \033[0m";
 
     echo "\n\n0. \033[33m[<- Back] \033[0m";
-    echo "\nSelect an option 0-4: ";
+    echo "\nSelect an option 0-5: ";
     $option_list = CLIInputManagerObject::getInputLine();
 
     if (!is_numeric($option_list) || $option_list < 0 || $option_list > 4 ){
