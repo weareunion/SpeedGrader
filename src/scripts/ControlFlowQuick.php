@@ -131,8 +131,9 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     $name = getcwd() . "/" . $name;
 
     echo "\n\033[32mGradebook export finished successfully. Saved at location: '$name' \033[0m\n";
-    echo "Press enter to continue...\n";
-    CLIInputManagerObject::getInputLine();
+    if (CLIInputManagerObject::promptYN("Do you want to open up the directory? (y/n)")){
+        open(getcwd());
+    }
     goto label_submission_list;
 }elseif($option === 'quit' || $option == 0){
     echo "Saving...\n";
@@ -147,7 +148,8 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     echo "\n1. \033[35m[Open Submission in Grader] \033[0m";
     echo "\n2. \033[35m[Change Submission Grade] \033[0m";
     echo "\n3. \033[35m[Move to Workbench] \033[0m";
-    echo "\n4. \033[31m[Delete submission from save] \033[0m";
+    echo "\n4. \033[35m[Open Workbench in File Browser] \033[0m";
+    echo "\n5. \033[31m[Delete submission from save] \033[0m";
 
     echo "\n\n0. \033[33m[<- Back] \033[0m";
     echo "\nSelect an option 0-4: ";
@@ -238,6 +240,11 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
             goto label_submission_option;
             break;
         case 4:
+            echo "Attempting to open file manager...\n";
+            open($workbench_dir);
+            goto label_submission_option;
+            break;
+        case 5:
             if(CLIInputManagerObject::promptYN("Are you sure you want to delete this submission? The actual file will not be deleted, 
             however the grade will be lost. (y/n)")){
                 unset($files_structured[$selected['file_name']]);
@@ -324,6 +331,11 @@ function show_file($file){
     return "\033[31m" . $file['student_name'] . " \033[0m - \033[36m[GRADE: ".(
     (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[33mN/A\033[0m")
     )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name'])).""."\033[0m)";
+}
+
+function open($fd_name){
+    shell_exec("open $fd_name  > /dev/null 2>/dev/null &");
+    shell_exec("xdg-open $fd_name > /dev/null 2>/dev/null &");
 }
 
 function make_workbench($parent_dir){
