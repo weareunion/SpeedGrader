@@ -7,10 +7,21 @@ if (isset($argv[2]) && is_dir($argv[2])){
 $parent_dir = getcwd();
 
 $files_structured = [];
+$details_active = false;
+$details = [
+    "assigment_name" => "",
+    "assigment_id" => "",
+    "section" => "",
+];
 echo "Quick grade mode started. Will run without classifications.\n";
 if (file_exists('progress.json')){
     echo "Previous GradeBook found. Restoring...\n";
     $files_structured = json_decode(file_get_contents('progress.json'), true);
+}
+if (file_exists('assigment.json')){
+    echo "Previous assigment details found. Restoring...\n";
+    $details = json_decode(file_get_contents('assigment.json'), true);
+    $details_active = true;
 }
 $dir_contents = array_diff(scandir(getcwd()), array('.', '..'));
 $workbench_dir = "";
@@ -23,6 +34,7 @@ foreach ($dir_contents as $content){
         $files_structured[$useable['file_name']]['late'] = $useable['late'];
     }
 }
+
 
 
 echo "" . count($dir_contents) . " files scanned, " . count($files_structured) . " usable. \n";
@@ -46,6 +58,11 @@ $workbench_name = 'workbench';
 $workbench_dir = make_workbench($parent_dir);
 
 label_submission_list:
+if ($details_active){
+    echo "\nAssigment: \033[35m ".$details['assigment_name']." - ".$details['assigment_id']." (".$details['section'].")\033[0m\n";
+}else{
+    echo "\nAssigment: \033[35m Unnamed Assigment \033[0m\n";
+}
 echo "Select submission to grade:\n";
 $count = 0;
 foreach($files_structured as $key => $file){
@@ -57,24 +74,40 @@ foreach($files_structured as $key => $file){
     $count++;
 }
 
-echo "\nexport. \033[35m[Export Grades] \033[0m";
+if (!$details_active) echo "\nexport. \e[90m[Export Grades] - \e[5m Must run assigment details first \e[25m\e[0m";
+else echo "\nexport. \033[35m[Export Grades] \033[0m";
+echo "\ndetails. \033[35m[Change Assigment Details] \033[0m";
 echo "\n0 or quit. \033[31m[Save and Quit] \033[0m";
 echo "\nSelect a submission number or command above:";
 
 file_put_contents('progress.json', json_encode($files_structured));
 
 $option = CLIInputManagerObject::getInputLine();
-if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option < 0 || $option > sizeof($files_structured))){
+if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_numeric($option) || $option < 0 || $option > sizeof($files_structured))){
     show_error("INVALID INPUT Please select a number in range. (Press enter to continue)");
     CLIInputManagerObject::getInputLine();
     goto label_submission_list;
-}elseif($option === 'export'){
+}elseif($option === 'details'){
     echo "\nSection Number: ";
-    $section = CLIInputManagerObject::getInputLine();
+    $details['section'] = CLIInputManagerObject::getInputLine();
     echo "\nAssigment Name: ";
-    $assigment_name = CLIInputManagerObject::getInputLine();
+    $details['assigment_name'] = CLIInputManagerObject::getInputLine();
     echo "\nAssigment ID: ";
-    $assigment_id = CLIInputManagerObject::getInputLine();
+    $details['assigment_id'] = CLIInputManagerObject::getInputLine();
+    echo "\n\033[32mDetails updated. \033[0m\n";
+    $details_active = true;
+    file_put_contents('assigment.json', json_encode($details));
+    goto label_submission_list;
+
+}elseif($option === 'export'){
+    if (!$details_active){
+        show_error("Error. Project details must be entered first. (Press enter to continue)");
+        CLIInputManagerObject::getInputLine();
+        goto label_submission_list;
+    }
+    $assigment_id = $details['assigment_id'];
+    $assigment_name = $details['assigment_name'];
+    $section = $details['section'];
     echo "\nSave file name (press enter for default): ";
     $name = CLIInputManagerObject::getInputLine();
     if ($name == ''){
@@ -129,7 +162,7 @@ if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option
             set_up($selected['file_name'], $workbench_dir, $parent_dir, $flatten, $auto_make);
             chdir($workbench_dir);
             echo "You are now in a partitioned environment with only this submission.\n";
-            echo "You can run any commands that you would run in the terminal (like 'ls -l') by just typing them. \nTo read the README file, type 'readme'. \nTo change the grade for this assignment, type 'grade'. \nTo exit this environment, type 'exit' or 'quit'.\nTo grade and exit, type 'gq'.\n";
+            echo "You can run any commands that you would run in the terminal (like 'ls -l') by just typing them. \nTo read the README file, type 'readme'. \nTo change the grade for this assignment, type 'grade'. \nTo exit this environment, type 'exit', '0' or 'quit'.\nTo grade and exit, type 'gq'.\n";
             $hold = true;
             while($hold){
                 $command = CLIInputManagerObject::getInputLine();
@@ -137,6 +170,7 @@ if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option
                 switch ($command){
                     case "exit":
                     case "quit":
+                    case "0":
                         $hold = false;
                     break;
                     case "readme":

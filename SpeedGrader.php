@@ -17,6 +17,10 @@ if (!file_exists('speedgrader/config.json')){
 if ($argv['1'] === 'quick') {
     require_once __DIR__ . '/src/scripts/ControlFlowQuick.php';
 }else{
+    echo "You're probably looking for quick grading mode. What you are accessing is an unfinished feature.\n";
+    echo "Rerun your command as 'php <SpeedGrader.php file> quick [directory to grade]'\n";
+    echo "If this was intentional, press enter\n";
+    CLIInputManagerObject::getInputLine();
     require_once __DIR__ . '/src/scripts/ControlFlow.php';
 }
 
