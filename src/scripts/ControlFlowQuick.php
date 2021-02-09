@@ -53,7 +53,7 @@ foreach($files_structured as $key => $file){
     echo "----------------------------------------------------------------------------------------------------------------------\n";
     echo $count + 1 . ". \033[31m" . $file['student_name'] . " \033[0m - \033[36m[GRADE: ".(
         (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[33mN/A\033[0m")
-        )."\033[36m]\033[0m │ (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/y H:i:s', filemtime($file['file_name']))."".($file['late'] === true ? ' \033[31m[LATE]\033[0m ' : "")." \033[0m)\n";
+        )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/y H:i:s', filemtime($file['file_name']))."".($file['late'] === true ? ' \033[31m[LATE]\033[0m ' : "")." \033[0m)\n";
     $count++;
 }
 
@@ -284,7 +284,7 @@ function show_error($message){
 function show_file($file){
     return "\033[31m" . $file['student_name'] . " \033[0m - \033[36m[GRADE: ".(
     (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[33mN/A\033[0m")
-    )."\033[36m]\033[0m │ (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name']))."".($file['late'] === true ? ' \033[31m[LATE]\033[0m ' : "")."\033[0m)";
+    )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name'])).""."\033[0m)";
 }
 
 function make_workbench($parent_dir){
