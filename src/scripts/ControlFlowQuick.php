@@ -48,10 +48,11 @@ label_submission_list:
 echo "Select submission to grade:\n";
 $count = 0;
 foreach($files_structured as $key => $file){
+    if (!isset($file['late'])) $file['late'] = false;
     echo "----------------------------------------------------------------------------------------------------------------------\n";
     echo $count + 1 . ". \033[31m" . $file['student_name'] . " \033[0m - \033[36m[GRADE: ".(
         (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[33mN/A\033[0m")
-        )."\033[36m]\033[0m │ (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/y H:i:s', filemtime($file['file_name']))."\033[0m)\n";
+        )."\033[36m]\033[0m │ (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/y H:i:s', filemtime($file['file_name']))." ".($file['late'] ? '\033[31m[LATE]\033[0m' : "")." \033[0m)\n";
     $count++;
 }
 
@@ -81,9 +82,9 @@ if ($option != 'quit' && $option != 'export' && (!is_numeric($option) || $option
     $name .= ".csv";
 
     echo "Exporting...\n";
-    $CSV = "Student,ID,Section, $assigment_name ($assigment_id),Grade Updated On\n";
+    $CSV = "Student,ID,Section, $assigment_name ($assigment_id)\n";
     foreach ($files_structured as $submission){
-        $CSV .= "" . $submission['student_name'] . "," . $submission['student_id'] . ',' . $section . "," . ( $submission['grade'] ?? "N\A" ) . "," . (isset($submission['grade_time']) ? date('Y-m-d H:i:s', $submission['grade_time']) : 'N/A') . "\n";
+        $CSV .= "" . $submission['student_name'] . "," . $submission['student_id'] . ',' . $section . "," . ( $submission['grade'] ?? "N\A" ) . "\n";
     }
 
     file_put_contents($name, $CSV);
@@ -221,7 +222,17 @@ function is_usable($file_name) {
                 return [
                     'student_name' => $parts[0],
                     'student_id' => $parts[1],
-                    'file_name' => $file_name
+                    'file_name' => $file_name,
+                    'late' => false
+
+                ];
+            }
+            if (count($parts) >= 2 && is_numeric($parts[2]) && $parts[1] == 'LATE'){
+                return [
+                    'student_name' => $parts[0],
+                    'student_id' => $parts[1],
+                    'file_name' => $file_name,
+                    'late' => true
                 ];
             }
             break;
@@ -272,7 +283,7 @@ function show_error($message){
 function show_file($file){
     return "\033[31m" . $file['student_name'] . " \033[0m - \033[36m[GRADE: ".(
     (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[33mN/A\033[0m")
-    )."\033[36m]\033[0m │ (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name']))."\033[0m)";
+    )."\033[36m]\033[0m │ (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name']))." ".($file['late'] ? '\033[31m[LATE]\033[0m' : "")." \033[0m)";
 }
 
 function make_workbench($parent_dir){
