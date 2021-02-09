@@ -230,7 +230,7 @@ function is_usable($file_name) {
             if (count($parts) >= 2 && is_numeric($parts[2]) && $parts[1] == 'LATE'){
                 return [
                     'student_name' => $parts[0],
-                    'student_id' => $parts[1],
+                    'student_id' => $parts[2],
                     'file_name' => $file_name,
                     'late' => true
                 ];
