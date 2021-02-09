@@ -39,6 +39,11 @@ foreach ($dir_contents as $content){
 
 echo "" . count($dir_contents) . " files scanned, " . count($files_structured) . " usable. \n";
 
+if (count($files_structured) === 0){
+    show_error("No usable files were found. Unzip the submissions.zip from Canvas and run in the resulting directory.");
+    exit(1);
+}
+
 echo "The following submissions were found: \n";
 
 $count = 0;
