@@ -123,6 +123,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     echo "Exporting...\n";
     $CSV = "Student,ID,Section, $assigment_name ($assigment_id)\n";
     foreach ($files_structured as $submission){
+        if (!isset($submission['grade'])) continue;
         $CSV .= "" . $submission['student_name'] . "," . $submission['student_id'] . ',' . $section . "," . ( $submission['grade'] ?? "N\A" ) . "\n";
     }
 
