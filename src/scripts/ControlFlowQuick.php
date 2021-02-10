@@ -63,6 +63,7 @@ $workbench_name = 'workbench';
 $workbench_dir = make_workbench($parent_dir);
 
 label_submission_list:
+system('clear');
 if ($details_active){
     echo "\nAssignment: \033[35m ".$details['assigment_name']." - ".$details['assigment_id']." (".$details['section'].")\033[0m\n";
 }else{
@@ -79,6 +80,10 @@ foreach($files_structured as $key => $file){
     $count++;
 }
 
+if ($count == 0){
+    echo "\nNo submissions found. \033[0m\n";
+}
+
 if (!$details_active) echo "\nexport. \e[90m[Export Grades] - \e[5m Must run assigment details first \e[25m\e[0m";
 else echo "\nexport. \033[35m[Export Grades] \033[0m";
 echo "\ndetails. \033[35m[Change Assignment Details] \033[0m";
@@ -93,11 +98,13 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     CLIInputManagerObject::getInputLine();
     goto label_submission_list;
 }elseif($option === 'details'){
-    echo "\nSection Number: ";
+    system('clear');
+    echo "\nEnter your section details:";
+    echo "\nSection Number: (Must match Canvas)";
     $details['section'] = CLIInputManagerObject::getInputLine();
-    echo "\nAssignment Name: ";
+    echo "\nAssignment Name: (Can be anything)";
     $details['assigment_name'] = CLIInputManagerObject::getInputLine();
-    echo "\nAssignment ID: ";
+    echo "\nAssignment ID: (Must match Canvas - Last part of the canvas URL)";
     $details['assigment_id'] = CLIInputManagerObject::getInputLine();
     echo "\n\033[32mDetails updated. \033[0m\n";
     $details_active = true;
@@ -137,6 +144,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     }
     goto label_submission_list;
 }elseif($option === 'quit' || $option == 0){
+    system('clear');
     echo "Saving...\n";
     file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     echo "Good Bye!\n";
@@ -144,8 +152,11 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     $selected = get_from_list($files_structured, $option);
     label_submission_option:
+    system('clear');
     file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
-    echo "Selected $option: " . show_file($selected);
+    echo "----------Selected:---------------------------------------------------------------------------------------------------\n";
+    echo "$option: " . show_file($selected);
+    echo "\n----------------------------------------------------------------------------------------------------------------------\n";
     echo "\n1. \033[35m[Open Submission in Grader] \033[0m";
     echo "\n2. \033[35m[Change Submission Grade] \033[0m";
     echo "\n3. \033[35m[Move to Workbench] \033[0m";
@@ -156,8 +167,10 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     echo "\nSelect an option 0-5: ";
     $option_list = CLIInputManagerObject::getInputLine();
 
-    if (!is_numeric($option_list) || $option_list < 0 || $option_list > 4 ){
+    if (!is_numeric($option_list) || $option_list < 0 || $option_list > 5 ){
         show_error("INVALID INPUT Please select a number in range.");
+        sleep(1);
+
         goto label_submission_option;
     }
     switch($option_list){
@@ -165,15 +178,20 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
             goto label_submission_list;
             break;
         case 1:
+            system('clear');
             echo "Moving into workbench...\n";
             $workbench_dir = make_workbench($parent_dir);
             set_up($selected['file_name'], $workbench_dir, $parent_dir, $flatten, $auto_make);
             chdir($workbench_dir);
+            echo "----------NOTICE:---------------------------------------------------------------------------------------------------\n";
             echo "You are now in a partitioned environment with only this submission.\n";
             echo "You can run any commands that you would run in the terminal (like 'ls -l') by just typing them. \nTo read the README file, type 'readme'. \nTo change the grade for this assignment, type 'grade'. \nTo exit this environment, type 'exit', '0' or 'quit'.\nTo grade and exit, type 'gq'.\n";
+            echo "--------------------------------------------------------------------------------------------------------------------\n";
             $hold = true;
             while($hold){
+                echo "\n>>";
                 $command = CLIInputManagerObject::getInputLine();
+                echo "\n";
                 $quit_when_done = false;
                 switch ($command){
                     case "exit":
@@ -232,6 +250,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
             }else{
                 echo "\nGrade could not be changed.\n";
             }
+            sleep(1);
             goto label_submission_option;
             break;
         case 3:
@@ -243,6 +262,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
         case 4:
             echo "Attempting to open file manager...\n";
             open($workbench_dir);
+            sleep(1);
             goto label_submission_option;
             break;
         case 5:
