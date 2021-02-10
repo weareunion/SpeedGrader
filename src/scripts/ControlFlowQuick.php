@@ -15,11 +15,11 @@ $details = [
 ];
 echo "Quick grade mode started. Will run without classifications.\n";
 if (file_exists("$parent_dir/progress.json")){
-    echo "Previous GradeBook found. Restoring...\n";
+    echo "[!] Previous GradeBook found. Restoring...\n";
     $files_structured = json_decode(file_get_contents("$parent_dir/progress.json"), true);
 }
 if (file_exists("$parent_dir/assigment.json")){
-    echo "Previous assigment details found. Restoring...\n";
+    echo "[!] Previous assigment details found. Restoring...\n";
     $details = json_decode(file_get_contents("$parent_dir/assigment.json"), true);
     $details_active = true;
 }
@@ -37,14 +37,14 @@ foreach ($dir_contents as $content){
 
 
 
-echo "" . count($dir_contents) . " files scanned, " . count($files_structured) . " usable. \n";
+echo "\n[->] " . count($dir_contents) . " files scanned, " . count($files_structured) . " usable. \n";
 
 if (count($files_structured) === 0){
     show_error("No usable files were found. Unzip the submissions.zip from Canvas and run in the resulting directory.");
     exit(1);
 }
 
-echo "The following submissions were found: \n";
+echo "\nThe following submissions were found: \n";
 
 $count = 0;
 foreach ($files_structured as $key => $file){
@@ -74,8 +74,8 @@ $count = 0;
 foreach($files_structured as $key => $file){
     if (!isset($file['late'])) $file['late'] = false;
     echo "----------------------------------------------------------------------------------------------------------------------\n";
-    echo $count + 1 . ". \033[31m" . $file['student_name'] . " \033[0m - \033[36m[GRADE: ".(
-        (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[33mN/A\033[0m")
+    echo $count + 1 . ". \033[31m" . $file['student_name'] . " \033[0m - \033[36m[".(
+        (isset($file['grade']) ? ('GRADE: ' . $file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[34m -Not yet graded- \033[0m")
         )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/y H:i:s', filemtime($file['file_name']))." \033[0m)\n";
     $count++;
 }
@@ -85,19 +85,19 @@ if ($count == 0){
 }
 
 if (!$details_active) echo "\nexport. \e[90m[Export Grades] - \e[5m Must run assigment details first \e[25m\e[0m";
-else echo "\nexport. \033[35m[Export Grades] \033[0m";
-echo "\ndetails. \033[35m[Change Assignment Details] \033[0m";
+else echo "\ne. \033[35m[Export Grades] \033[0m";
+echo "\nd. \033[35m[Change Assignment Details] \033[0m";
 echo "\n0 or quit. \033[31m[Save and Quit] \033[0m";
 echo "\nSelect a submission number or command above:";
 
 file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
 
 $option = CLIInputManagerObject::getInputLine();
-if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_numeric($option) || $option < 0 || $option > sizeof($files_structured))){
+if ($option != 'quit' && $option != 'e' && $option != 'd' && (!is_numeric($option) || $option < 0 || $option > sizeof($files_structured))){
     show_error("INVALID INPUT Please select a number in range. (Press enter to continue)");
     CLIInputManagerObject::getInputLine();
     goto label_submission_list;
-}elseif($option === 'details'){
+}elseif($option === 'd'){
     system('clear');
     echo "\nEnter your section details:";
     echo "\nSection Number: (Must match Canvas)";
@@ -111,7 +111,7 @@ if ($option != 'quit' && $option != 'export' && $option != 'details' && (!is_num
     file_put_contents("$parent_dir/assigment.json", json_encode($details));
     goto label_submission_list;
 
-}elseif($option === 'export'){
+}elseif($option === 'e'){
     if (!$details_active){
         show_error("Error. Project details must be entered first. (Press enter to continue)");
         CLIInputManagerObject::getInputLine();
@@ -350,8 +350,8 @@ function show_error($message){
 }
 
 function show_file($file){
-    return "\033[31m" . $file['student_name'] . " \033[0m - \033[36m[GRADE: ".(
-    (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[33mN/A\033[0m")
+    return "\033[31m" . $file['student_name'] . " \033[0m - \033[36m[".(
+    "" . (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[34m -Not yet graded- \033[0m")
     )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name'])).""."\033[0m)";
 }
 
