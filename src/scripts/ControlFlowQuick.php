@@ -335,7 +335,7 @@ function readme(){
 
 function set_up($file_name, $workbench_dir, $parent_dir, $flatten, $auto_make){
     chdir($workbench_dir);
-    shell_exec("unzip ".($flatten ? '-jo' : '')." ../$file_name");
+    shell_exec("unzip ".($flatten ? '-jo' : '')." '../$file_name'");
     if ($auto_make){
         echo "----------MAKE:-----------------------------------------------------------------------------------------------------\n";
         echo "Making file (will sleep SpeedGrader for 3 seconds to give make time to run)...\n";
