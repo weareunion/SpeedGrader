@@ -61,7 +61,7 @@ if (CLIInputManagerObject::promptYN("Begin screening? (y/n): ")){
 }
 $workbench_name = 'workbench';
 $workbench_dir = make_workbench($parent_dir);
-
+$show_comments = false;
 label_submission_list:
 system('clear');
 if ($details_active){
@@ -72,13 +72,19 @@ if ($details_active){
 echo "Select submission to grade:\n";
 $count = 0;
 foreach($files_structured as $key => $file){
-    if (!isset($file['late'])) $file['late'] = false;
-    echo "----------------------------------------------------------------------------------------------------------------------\n";
-    echo $count + 1 . ". \033[31m" . $file['student_name'] . " \033[0m - \033[36m[".(
-        (isset($file['grade']) ? ('GRADE: ' . $file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[34m -Not yet graded- \033[0m")
-        )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/y H:i:s', filemtime($file['file_name']))." \033[0m)\n";
+    if (!$show_comments) {
+        if (!isset($file['late'])) $file['late'] = false;
+        echo "----------------------------------------------------------------------------------------------------------------------\n";
+        echo $count + 1 . ". \033[31m" . $file['student_name'] . " \033[0m - \033[36m[" . (
+            ( isset($file['grade']) ? ( 'GRADE: ' . $file['grade'] . ' @ ' . ( isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A' ) ) : "\033[34m -Not yet graded- \033[0m" )
+            ) . "\033[36m]\033[0m" . ( $file['late'] === true ? '[LATE]' : "" ) . " | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m" . date('m/d/y H:i:s', filemtime($file['file_name'])) . " \033[0m)\n";
+    }else{
+        echo "----------------------------------------------------------------------------------------------------------------------\n";
+        echo "" . ($count + 1) . ". " . show_file_comments($file) . "\n";
+    }
     $count++;
 }
+
 
 if ($count == 0){
     echo "\nNo submissions found. \033[0m\n";
@@ -86,6 +92,7 @@ if ($count == 0){
 
 if (!$details_active) echo "\nexport. \e[90m[Export Grades] - \e[5m Must run assigment details first \e[25m\e[0m";
 else echo "\ne. \033[35m[Export Grades] \033[0m";
+echo  ($show_comments ? "\nc. \033[35m[Hide Comments] \033[0m" : "\nc. \033[35m[Show Comments] \033[0m");
 echo "\nd. \033[35m[Change Assignment Details] \033[0m";
 echo "\n0 or quit. \033[31m[Save and Quit] \033[0m";
 echo "\nSelect a submission number or command above:";
@@ -93,7 +100,7 @@ echo "\nSelect a submission number or command above:";
 file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
 
 $option = CLIInputManagerObject::getInputLine();
-if ($option != 'quit' && $option != 'e' && $option != 'd' && (!is_numeric($option) || $option < 0 || $option > sizeof($files_structured))){
+if ($option != 'quit' && $option != 'e' && $option != 'd' && $option != 'c' && (!is_numeric($option) || $option < 0 || $option > sizeof($files_structured))){
     show_error("INVALID INPUT Please select a number in range. (Press enter to continue)");
     CLIInputManagerObject::getInputLine();
     goto label_submission_list;
@@ -143,6 +150,9 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && (!is_numeric($optio
         open(getcwd());
     }
     goto label_submission_list;
+}elseif($option === 'c'){
+    $show_comments = !$show_comments;
+    goto label_submission_list;
 }elseif($option === 'quit' || $option == 0){
     system('clear');
     echo "Saving...\n";
@@ -155,13 +165,15 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && (!is_numeric($optio
     system('clear');
     file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     echo "----------Selected:---------------------------------------------------------------------------------------------------\n";
-    echo "$option: " . show_file($selected);
+    echo "$option: " . show_file($selected) . "\n";
+    echo show_file_comments($selected);
     echo "\n----------------------------------------------------------------------------------------------------------------------\n";
     echo "\n1. \033[35m[Open Submission in Grader] \033[0m";
     echo "\n2. \033[35m[Change Submission Grade] \033[0m";
-    echo "\n3. \033[35m[Move to Workbench] \033[0m";
-    echo "\n4. \033[35m[Open Workbench in File Browser] \033[0m";
-    echo "\n5. \033[31m[Delete submission from save] \033[0m";
+    echo "\n3. \033[35m[Add Submission Comment] \033[0m";
+    echo "\n4. \033[35m[Move to Workbench] \033[0m";
+    echo "\n5. \033[35m[Open Workbench in File Browser] \033[0m";
+    echo "\n6. \033[31m[Delete submission from save] \033[0m";
 
     echo "\n\n0. \033[33m[<- Back] \033[0m";
     echo "\nSelect an option 0-5: ";
@@ -185,7 +197,7 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && (!is_numeric($optio
             chdir($workbench_dir);
             echo "----------NOTICE:---------------------------------------------------------------------------------------------------\n";
             echo "You are now in a partitioned environment with only this submission.\n";
-            echo "You can run any commands that you would run in the terminal (like 'ls -l') by just typing them. \nTo read the README file, type 'readme'. \nTo change the grade for this assignment, type 'grade'. \nTo exit this environment, type 'exit', '0' or 'quit'.\nTo grade and exit, type 'gq'.\n";
+            echo "You can run any commands that you would run in the terminal (like 'ls -l') by just typing them. \nTo read the README file, type 'readme'. \nTo change the grade for this assignment, type 'grade'. \nTo exit this environment, type 'exit', '0' or 'quit'.\nTo grade and exit, type 'gq'.\n Add a comment: 'c'\n";
             echo "--------------------------------------------------------------------------------------------------------------------\n";
             $hold = true;
             while($hold){
@@ -203,6 +215,10 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && (!is_numeric($optio
                     case "README":
                         readme();
                     break;
+                    case "c":
+                    case "comment":
+                        goto label_submission_add_comment;
+                        break;
                     case "gq":
                         $quit_when_done = true;
                     case "grade":
@@ -254,18 +270,30 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && (!is_numeric($optio
             goto label_submission_option;
             break;
         case 3:
+            label_submission_add_comment:
+            echo "Add a comment to this submission: ";
+            $comment = CLIInputManagerObject::getInputLine();
+            if(addComment($files_structured[$selected['file_name']], $comment)){
+                echo "\n\033[32mComment changed successfully.\033[0m\n";
+            }else{
+                echo "\nComment could not be changed.\n";
+            }
+            sleep(1);
+            goto label_submission_option;
+            break;
+        case 4:
             echo "Moving submission to a new workbench...\n";
             $workbench_dir = make_workbench($parent_dir);
             set_up($selected['file_name'], $workbench_dir, $parent_dir, $flatten, $auto_make);
             goto label_submission_option;
             break;
-        case 4:
+        case 5:
             echo "Attempting to open file manager...\n";
             open($workbench_dir);
             sleep(1);
             goto label_submission_option;
             break;
-        case 5:
+        case 6:
             if(CLIInputManagerObject::promptYN("Are you sure you want to delete this submission? The actual file will not be deleted, 
             however the grade will be lost. (y/n)")){
                 unset($files_structured[$selected['file_name']]);
@@ -318,9 +346,14 @@ function get_from_list($files_structured, $number){
     }
 }
 
-function change_grade(&$files_structured, $grade){
+function change_grade(&$files_structured, $grade, $comment=null){
     $files_structured['grade'] = $grade;
     $files_structured['grade_time'] = time();
+    return true;
+}
+
+function addComment(&$files_structured, $comment){
+    $files_structured['comment'] = $comment;
     return true;
 }
 
@@ -352,7 +385,10 @@ function show_error($message){
 function show_file($file){
     return "\033[31m" . $file['student_name'] . " \033[0m - \033[36m[".(
     "" . (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[34m -Not yet graded- \033[0m")
-    )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name'])).""."\033[0m)";
+    )."\033[36m]\033[0m".($file['late'] === true ? '[LATE]' : "")." | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m".date('m/d/Y H:i:s', filemtime($file['file_name'])).""."\033[0m)" ;
+}
+function show_file_comments($file){
+    return "\033[31m Comments for " . $file['student_name'] . "'s submission \033[0m - \033[36m". ($file['comment'] ?? 'No comment.' . " - Grade: " . (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[34m Not yet graded \033[0m"))  ;
 }
 
 function open($fd_name){
