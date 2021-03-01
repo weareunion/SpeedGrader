@@ -63,6 +63,7 @@ $workbench_name = 'workbench';
 $workbench_dir = make_workbench($parent_dir);
 $show_comments = false;
 label_submission_list:
+chdir($parent_dir);
 system('clear');
 if ($details_active){
     echo "\nAssignment: \033[35m ".$details['assigment_name']." - ".$details['assigment_id']." (".$details['section'].")\033[0m\n";
@@ -163,6 +164,7 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && $option != 'c' && (
     $selected = get_from_list($files_structured, $option);
     label_submission_option:
     system('clear');
+    chdir($parent_dir);
     file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     echo "----------Selected:---------------------------------------------------------------------------------------------------\n";
     echo "$option: " . show_file($selected) . "\n";
