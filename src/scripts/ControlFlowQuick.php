@@ -81,7 +81,7 @@ foreach($files_structured as $key => $file){
             ) . "\033[36m]\033[0m" . ( $file['late'] === true ? '[LATE]' : "" ) . " | (ID: " . $file['student_id'] . ") (" . $file['file_name'] . " @ \033[96m" . date('m/d/y H:i:s', filemtime($file['file_name'])) . " \033[0m)\n";
     }else{
         echo "----------------------------------------------------------------------------------------------------------------------\n";
-        echo "" . ($count + 1) . ". " . show_file_comments($file) . "\n";
+        echo "" . ($count + 1) . ". " . show_file_comments($file) . "\n Deductions\n" . show_file_deductions($file) . "\n";
     }
     $count++;
 }
@@ -168,20 +168,22 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && $option != 'c' && (
     file_put_contents("$parent_dir/progress.json", json_encode($files_structured));
     echo "----------Selected:---------------------------------------------------------------------------------------------------\n";
     echo "$option: " . show_file($selected) . "\n";
-    echo show_file_comments($selected);
+    echo show_file_comments($selected) . "\n\n Deductions: \n";
+    echo show_file_deductions($selected);
     echo "\n----------------------------------------------------------------------------------------------------------------------\n";
     echo "\n1. \033[35m[Open Submission in Grader] \033[0m";
     echo "\n2. \033[35m[Change Submission Grade] \033[0m";
-    echo "\n3. \033[35m[Add Submission Comment] \033[0m";
-    echo "\n4. \033[35m[Move to Workbench] \033[0m";
-    echo "\n5. \033[35m[Open Workbench in File Browser] \033[0m";
-    echo "\n6. \033[31m[Delete submission from save] \033[0m";
+    echo "\n3. \033[35m[Add Deduction/Addition] \033[0m";
+    echo "\n4. \033[35m[Add Submission Comment] \033[0m";
+    echo "\n5. \033[35m[Move to Workbench] \033[0m";
+    echo "\n6. \033[35m[Open Workbench in File Browser] \033[0m";
+    echo "\n7. \033[31m[Delete submission from save] \033[0m";
 
     echo "\n\n0. \033[33m[<- Back] \033[0m";
-    echo "\nSelect an option 0-5: ";
+    echo "\nSelect an option 0-7: ";
     $option_list = CLIInputManagerObject::getInputLine();
     echo "----------------------------------------------------------\n";
-    if (!is_numeric($option_list) || $option_list < 0 || $option_list > 5 ){
+    if (!is_numeric($option_list) || $option_list < 0 || $option_list > 7 ){
         show_error("INVALID INPUT Please select a number in range.");
         sleep(1);
 
@@ -199,7 +201,7 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && $option != 'c' && (
             chdir($workbench_dir);
             echo "----------NOTICE:---------------------------------------------------------------------------------------------------\n";
             echo "You are now in a partitioned environment with only this submission.\n";
-            echo "You can run any commands that you would run in the terminal (like 'ls -l') by just typing them. \nTo read the README file, type 'readme'. \nTo change the grade for this assignment, type 'grade'. \nTo exit this environment, type 'exit', '0' or 'quit'.\nTo grade and exit, type 'gq'.\n Add a comment: 'c'\n";
+            echo "You can run any commands that you would run in the terminal (like 'ls -l') by just typing them. \nTo read the README file, type 'readme'. \nTo change the grade for this assignment, type 'grade'. \nAdd a deduction: 'd'\nTo exit this environment, type 'exit', '0' or 'quit'.\nTo grade and exit, type 'gq'.\n Add a comment: 'c'\n";
             echo "--------------------------------------------------------------------------------------------------------------------\n";
             $hold = true;
             while($hold){
@@ -241,6 +243,26 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && $option != 'c' && (
                             goto label_submission_list;
                         }
                         break;
+                    case "d":
+                        echo "Deduction/Addition amount (may be negative) ";
+                        $grade = CLIInputManagerObject::getInputLine();
+                        if (!is_numeric($grade) ){
+                            show_error("INVALID INPUT Please select a number in range. (Press enter to continue)");
+                            CLIInputManagerObject::getInputLine();
+                            goto label_submission_changegrade_option;
+                        }
+                        echo "Deduction/Addition comment ";
+                        $comment = CLIInputManagerObject::getInputLine();
+                        if(addDeduction($files_structured[$selected['file_name']], $grade, $comment)){
+                            echo "\n\033[32mDeduction/Addition added successfully.\033[0m\n";
+                        }else{
+                            echo "\nDeduction/Addition added could not be added.\n";
+                        }
+                        if ($quit_when_done){
+                            $hold = false;
+                            goto label_submission_list;
+                        }
+                        break;
                     default:
                         $output = [];
                         exec($command, $output, $return_var);
@@ -272,6 +294,24 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && $option != 'c' && (
             goto label_submission_option;
             break;
         case 3:
+            echo "Deduction/Addition amount (may be negative) ";
+            $grade = CLIInputManagerObject::getInputLine();
+            if (!is_numeric($grade) ){
+                show_error("INVALID INPUT Please select a number in range. (Press enter to continue)");
+                CLIInputManagerObject::getInputLine();
+                goto label_submission_changegrade_option;
+            }
+            echo "Deduction/Addition comment ";
+            $comment = CLIInputManagerObject::getInputLine();
+            if(addDeduction($files_structured[$selected['file_name']], $grade, $comment)){
+                echo "\n\033[32mDeduction/Addition added successfully.\033[0m\n";
+            }else{
+                echo "\nDeduction/Addition added could not be added.\n";
+            }
+            sleep(1);
+            goto label_submission_option;
+            break;
+        case 4:
             label_submission_add_comment:
             echo "Add a comment to this submission: ";
             $comment = CLIInputManagerObject::getInputLine();
@@ -283,19 +323,19 @@ if ($option != 'quit' && $option != 'e' && $option != 'd' && $option != 'c' && (
             sleep(1);
             goto label_submission_option;
             break;
-        case 4:
+        case 5:
             echo "Moving submission to a new workbench...\n";
             $workbench_dir = make_workbench($parent_dir);
             set_up($selected['file_name'], $workbench_dir, $parent_dir, $flatten, $auto_make);
             goto label_submission_option;
             break;
-        case 5:
+        case 6:
             echo "Attempting to open file manager...\n";
             open($workbench_dir);
             sleep(1);
             goto label_submission_option;
             break;
-        case 6:
+        case 7:
             if(CLIInputManagerObject::promptYN("Are you sure you want to delete this submission? The actual file will not be deleted, 
             however the grade will be lost. (y/n)")){
                 unset($files_structured[$selected['file_name']]);
@@ -358,6 +398,18 @@ function addComment(&$files_structured, $comment){
     $files_structured['comment'] = $comment;
     return true;
 }
+function addDeduction(&$files_structured, $amount,$comment){
+    if (!isset($files_structured['deductions'])){
+        $files_structured['deductions'] = [];
+    }
+    $files_structured['deductions'][] = [
+        "amount" => $amount,
+        "comment" => $comment
+    ];
+    change_grade($files_structured, $files_structured['grade'] + $amount);
+    return true;
+}
+
 
 function readme(){
     if (!file_exists('README')){
@@ -391,6 +443,14 @@ function show_file($file){
 }
 function show_file_comments($file){
     return "\033[31m Comments for " . $file['student_name'] . "'s submission \033[0m - \033[36m". ($file['comment'] ?? 'No comment.' . " - Grade: " . (isset($file['grade']) ? ($file['grade'] .' @ '. (isset($file['grade_time']) ? date('Y-m-d H:i:s', $file['grade_time']) : 'N/A')) : "\033[34m Not yet graded \033[0m"))  ;
+}
+
+function show_file_deductions($file){
+    $string = "";
+    foreach($file['deductions'] as $deduction){
+        $string .= $deduction['amount'] . " Points: " . $deduction['comment'] . "\n";
+    }
+    return $string ;
 }
 
 function open($fd_name){
